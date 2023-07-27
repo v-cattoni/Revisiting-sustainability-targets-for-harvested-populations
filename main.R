@@ -222,6 +222,11 @@ sse_pt <- function(p, X, Y) {
   return(sse(Y, PT(r, k, X)))
 }
 
+#Growth rates corresponding to equal optimal escapements as a proportion of fitted carrying capacity
+bh_vs_hs_r <- function(r) {
+  return((r - 1) / ((r ** 0.5) - 1))
+}
+
 #### Sorting data ####
 #Creates a matrix of Biomass data and a matrix of Catch data with only
 #overlapping entries.
@@ -239,21 +244,6 @@ for (i in cols) {
 
 #### Main ####
 for (i in 1:length(cols)) {
-  if (i == 50) {
-    print(i)
-  }
-  if (i == 100) {
-    print(i)
-  }
-  if (i == 150) {
-    print(i)
-  }
-  if (i == 200) {
-    print(i)
-  }
-  if (i == 250) {
-    print(i)
-  }
   bios <- bio_mat[, i][!is.na(bio_mat[, i])]
   catchs <- catch_mat[, i][!is.na(catch_mat[, i])]
   X <-
@@ -342,7 +332,7 @@ for (i in 1:length(cols)) {
       if (hs_opt[[1]][1] > hs_opt[[1]][2] / min(X)) {
         hs_opt[[1]][1] <- hs_opt[[1]][2] / min(X)
       }
-      if (hs_opt[[1]][2] > max(X, Y)){
+      if (hs_opt[[1]][2] > max(X, Y)) {
         hs_opt[[1]][2] <- max(X, Y)
       }
       
@@ -470,93 +460,133 @@ for (i in 1:length(cols)) {
       append(opt_esc_pt_scaled_bf, opt_esc_pt_scaled[i])
   }
   
-  if(hs_opt_r < bh_opt_r){
+  if (hs_opt_r < bh_opt_r) {
     num_hs_lower_bh_r = num_hs_lower_bh_r + 1
   }
-  if(hs_opt_k < bh_opt_k){
+  if (hs_opt_k < bh_opt_k) {
     num_hs_lower_bh_k = num_hs_lower_bh_k + 1
   }
-  if(opt_esc_bh[i] < opt_esc_hs[i]){
+  if (opt_esc_bh[i] < opt_esc_hs[i]) {
     num_hs_higher_bh_opt_esc_prop_k = num_hs_higher_bh_opt_esc_prop_k + 1
   }
-  if(opt_esc_hs[i] > 0.6){
+  if (opt_esc_hs[i] > 0.6) {
     num_hs_higher_b60_opt_esc_prop_k = num_hs_higher_b60_opt_esc_prop_k + 1
   }
-  if(opt_esc_hs_scaled[i] > opt_esc_bh_scaled[i]){
+  if (opt_esc_hs_scaled[i] > opt_esc_bh_scaled[i]) {
     num_hs_higher_bh_opt_esc_prop_max_pop = num_hs_higher_bh_opt_esc_prop_max_pop + 1
   }
-  if(k_bh[i] > 1){
+  if (k_bh[i] > 1) {
     num_bh_k_higher_1 = num_bh_k_higher_1 + 1
   }
   
-  if(k_hs[i] > 0.99999 & opt_esc_hs_scaled[i] < opt_esc_bh_scaled[i]){
-    if(hs_opt_esc(r_hs[i], k_bh[i]) > opt_esc_bh_scaled[i]){
+  if (k_hs[i] > 0.99999 &
+      opt_esc_hs_scaled[i] < opt_esc_bh_scaled[i]) {
+    if (hs_opt_esc(r_hs[i], k_bh[i]) > opt_esc_bh_scaled[i]) {
       num_hs_higher_bh_opt_esc_replacing_1s = num_hs_higher_bh_opt_esc_replacing_1s + 1
     }
   }
 }
 
 #### Results ####
+print("Results for non-deterministic data set:")
+cat("\n")
+cat("\n")
+print(paste0("Number of data sets = ", num_cols))
+cat("\n")
 print("Best fit as a percentage.")
-print(paste0("Beverton-Holt: ", round(100 * num_bh / num_cols), "%"))
-print(paste0("Hockey-Stick: ", round(100 * num_hs / num_cols), "%"))
-print(paste0("Ricker: ", round(100 * num_ri / num_cols), "%"))
-print(paste0("Pella-Tomlinson: ", round(100 * num_pt / num_cols), "%"))
-
+print(paste0(
+  "BH: ",
+  round(100 * num_bh / (num_cols)),
+  "%, HS: ",
+  round(100 * num_hs / (num_cols)),
+  "%, RI: ",
+  round(100 * num_ri / (num_cols)),
+  "%, PT: ",
+  round(100 * num_pt / (num_cols)),
+  "%"
+))
+cat("\n")
 print("Median r-squared values.")
-print(paste0("Beverton-Holt: ", round(median(r2_bh), digits <- 2)))
-print(paste0("Hockey-Stick: ", round(median(r2_hs), digits <- 2)))
-print(paste0("Ricker: ", round(median(r2_ri), digits <- 2)))
-print(paste0("Pella-Tomlinson: ", round(median(r2_pt), digits <-
-                                          2)))
-
+print(paste0(
+  "BH: ",
+  round(median(r2_bh), digits <-
+          2),
+  ", HS: ",
+  round(median(r2_hs), digits <-
+          2),
+  ", RI: ",
+  round(median(r2_ri), digits <-
+          2),
+  ", PT: ",
+  round(median(r2_pt), digits <- 2)
+))
+cat("\n")
+print(paste0(
+  "HS suggests a growth rate lower than BH ",
+  round(100 * num_hs_lower_bh_r / (num_cols)),
+  "% of the time."
+))
+cat("\n")
+print(paste0(
+  "HS suggests a carrying capacity lower than BH ",
+  round(100 * num_hs_lower_bh_k / (num_cols)),
+  "% of the time."
+))
+cat("\n")
 print(
   paste0(
-    "Hockey-stick suggests a growth rate lower than Beverton-Holt ",
-    round(100 * num_hs_lower_bh_r / num_cols),
-    "% of the time, and a carrying capacity lower than Beverton-Holt ",
-    round(100 * num_hs_lower_bh_k / num_cols),
+    "HS suggests higher optimal escapement than BH as a proportion of k ",
+    round(100 * num_hs_higher_bh_opt_esc_prop_k / (num_cols)),
     "% of the time."
   )
 )
-
+cat("\n")
+print(paste0(
+  "HS suggests escapement higher than B60 ",
+  round(100 * num_hs_higher_b60_opt_esc_prop_k / (num_cols)) ,
+  "% of the time."
+))
+cat("\n")
 print(
   paste0(
-    "As a proportion of carrying capacity, the hockey-stick provides more conservative estimates for optimal escapement ",
-    round(100 * num_hs_higher_bh_opt_esc_prop_k / num_cols),
-    "% of the time. Furthermore, in ",
-    round(100 * num_hs_higher_b60_opt_esc_prop_k / num_cols) ,
-    "% of the fits, hockey-stick optimal escapement was higher than 60 percent of carrying capacity."
+    "HS suggests higher optimal escapement than BH as a proportion of the max pop ",
+    round(
+      100 * num_hs_higher_bh_opt_esc_prop_max_pop / (num_cols)
+    )  ,
+    "% of the time."
   )
 )
-
+cat("\n")
 print(
   paste0(
-    "Further, we find that when we consider optimal escapement as a proportion of the maximum recorded biomass (i.e. without removing any information), the hockey-stick fits prove a more conservative ",
-    round(100 * num_hs_higher_bh_opt_esc_prop_max_pop / num_cols)  ,
-    "% of the time"
+    "This increases to ",
+    round(
+      100 * (
+        num_hs_higher_bh_opt_esc_prop_max_pop + num_hs_higher_bh_opt_esc_replacing_1s
+      ) / (num_cols)
+    ),
+    "% if we take the BH k as true when HS k = 1."
   )
 )
-
+cat("\n")
 print(
   paste0(
-    "The Beverton-Holt, suggested a carrying capacity greater than the maximum observed population ", round(100*num_bh_k_higher_1/num_cols), "% of the time."
+    "BH suggests a carrying capacity greater than the max pop ",
+    round(100 * num_bh_k_higher_1 / (num_cols)),
+    "% of the time."
   )
 )
-
-print(
-  paste0(
-    "We considered a case where the Beverton-Holt estimates for carrying capacity are used in the data sets where the Hockey-Stick model did not find any density dependence. The result was that Hockey-Stick suggested a higher optimal escapement in ", round(100*(num_hs_higher_bh_opt_esc_prop_max_pop + num_hs_higher_bh_opt_esc_replacing_1s)/num_cols),"% of the data sets in this case"
-  )
-)
-
+cat("\n")
+cat("\n")
 #### Fig 1 - Recruitment functions ####
 pdf(file = './plots/recruitment_functions.pdf',
     width = 3.5,
     height = 3.5)
-par(mfrow = c(1, 1),
-    mar = c(1, 1, .7, .7),
-    oma = c(2.51, 2.51, 0, 0))
+par(
+  mfrow = c(1, 1),
+  mar = c(1, 1, .7, .7),
+  oma = c(2.51, 2.51, 0, 0)
+)
 
 r = 1.7
 
@@ -629,16 +659,20 @@ legend(
   cex = .9,
   lwd = c(lw, lw * 1.2, lw * 1.7, lw * 1.5)
 )
-mtext(side = 1,
-      "Population size, year t",
-      outer = TRUE,
-      padj = 1.9,
-      cex = cl)
-mtext(side = 2,
-      "Population size, year t+1",
-      outer = TRUE,
-      padj = -1.9,
-      cex = cl)
+mtext(
+  side = 1,
+  "Population size, year t",
+  outer = TRUE,
+  padj = 1.9,
+  cex = cl
+)
+mtext(
+  side = 2,
+  "Population size, year t+1",
+  outer = TRUE,
+  padj = -1.9,
+  cex = cl
+)
 dev.off()
 
 
@@ -647,9 +681,11 @@ dev.off()
 pdf(file = './plots/opt_esc_curves.pdf',
     width = 3.5,
     height = 3.5)
-par(mfrow = c(1, 1),
-    mar = c(1, 1, .7, .7),
-    oma = c(2.51, 2.51, 0, 0))
+par(
+  mfrow = c(1, 1),
+  mar = c(1, 1, .7, .7),
+  oma = c(2.51, 2.51, 0, 0)
+)
 
 r = 1.7
 
@@ -735,16 +771,20 @@ legend(
   cex = .9,
   lwd = c(lw, lw * 1.2, lw * 1.7, lw * 1.5)
 )
-mtext(side = 1,
-      "Population growth multiplier, r",
-      outer = TRUE,
-      padj = 1.9,
-      cex = cl)
-mtext(side = 2,
-      "Optimal Escapement",
-      outer = TRUE,
-      padj = -1.9,
-      cex = cl)
+mtext(
+  side = 1,
+  "Population growth multiplier, r",
+  outer = TRUE,
+  padj = 1.9,
+  cex = cl
+)
+mtext(
+  side = 2,
+  "Optimal Escapement",
+  outer = TRUE,
+  padj = -1.9,
+  cex = cl
+)
 dev.off()
 
 #### Fig 3 - Catch when model is wrong ####
@@ -774,9 +814,11 @@ C.H.B = x2.H.B - e.H
 pdf(file = './plots/catch.pdf',
     width = 7,
     height = 3.5)
-par(mfrow = c(1, 2),
-    mar = c(1, 1, .5, .55),
-    oma = c(2.51, 2.51, 0, 0))
+par(
+  mfrow = c(1, 2),
+  mar = c(1, 1, .5, .55),
+  oma = c(2.51, 2.51, 0, 0)
+)
 ylimC = c(0, max(C.B.B, C.H.H))
 ylimB = c(0, 1.01)
 #BH true
@@ -823,16 +865,20 @@ lines(R,
       lwd = lw,
       col = bh_col)
 text(1.92, .7, 'b) Hockey-Stick true')
-mtext(side = 1,
-      "Population growth multiplier, r",
-      outer = TRUE,
-      padj = 1.9,
-      cex = cl)
-mtext(side = 2,
-      "Catch",
-      outer = TRUE,
-      padj = -1.9,
-      cex = cl)
+mtext(
+  side = 1,
+  "Population growth multiplier, r",
+  outer = TRUE,
+  padj = 1.9,
+  cex = cl
+)
+mtext(
+  side = 2,
+  "Catch",
+  outer = TRUE,
+  padj = -1.9,
+  cex = cl
+)
 legend(
   'bottomright',
   c('Beverton-Holt harvest', 'Hockey-stick harvest'),
@@ -849,9 +895,11 @@ dev.off()
 pdf(file = './plots/prop_catch.pdf',
     width = 3.5,
     height = 3.5)
-par(mfrow = c(1, 1),
-    mar = c(1, 1, .7, .7),
-    oma = c(2.51, 2.51, 0, 0))
+par(
+  mfrow = c(1, 1),
+  mar = c(1, 1, .7, .7),
+  oma = c(2.51, 2.51, 0, 0)
+)
 
 plot(
   R,
@@ -890,27 +938,34 @@ legend(
   cex = .9,
   lwd = c(lw, lw * 1.2)
 )
-mtext(side = 1,
-      "Population growth multiplier, r",
-      outer = TRUE,
-      padj = 1.9,
-      cex = cl)
-mtext(side = 2,
-      "Proportion of optimal catch",
-      outer = TRUE,
-      padj = -1.9,
-      cex = cl)
+mtext(
+  side = 1,
+  "Population growth multiplier, r",
+  outer = TRUE,
+  padj = 1.9,
+  cex = cl
+)
+mtext(
+  side = 2,
+  "Proportion of optimal catch",
+  outer = TRUE,
+  padj = -1.9,
+  cex = cl
+)
 dev.off()
 
 
 #### Fig 5 - Growth rate and carrying capacity scatter plots####
-
+R = seq(1, 5, length.out = 100)
+K = seq(0, 5, length.out = 100)
 pdf(file = './plots/scatter_combined.pdf',
     width = 7,
     height = 3.2)
-par(mfrow = c(1, 2),
-    mar = c(3.5, 3.5, 0.5, 2),
-    oma = c(0, 0, 0, 0))
+par(
+  mfrow = c(1, 2),
+  mar = c(3.5, 3.5, 0.5, 2),
+  oma = c(0, 0, 0, 0)
+)
 plot(
   r_bh,
   r_hs,
@@ -933,25 +988,33 @@ lines(R,
       lty = 2,
       lwd = lw * 1.5,
       col = 'red')
-mtext(side = 1,
-      "Beverton-Holt, r",
-      outer = FALSE,
-      padj = 3,
-      cex = cl)
-mtext(side = 2,
-      "Hockey-Stick, r",
-      outer = FALSE,
-      padj = -3,
-      cex = cl)
+mtext(
+  side = 1,
+  "Beverton-Holt, r",
+  outer = FALSE,
+  padj = 3,
+  cex = cl
+)
+mtext(
+  side = 2,
+  "Hockey-Stick, r",
+  outer = FALSE,
+  padj = -3,
+  cex = cl
+)
 text(1.9, 3.8, 'a) Growth rate, r')
-axis(side = 2,
-     at = c(0, 1, 2, 3, 4),
-     labels = c(0, 1, 2, 3, 4),
-     cex.axis = ca)
-axis(side = 1,
-     at = c(0, 1, 2, 3, 4),
-     labels = c(0, 1, 2, 3, 4),
-     cex.axis = ca)
+axis(
+  side = 2,
+  at = c(0, 1, 2, 3, 4),
+  labels = c(0, 1, 2, 3, 4),
+  cex.axis = ca
+)
+axis(
+  side = 1,
+  at = c(0, 1, 2, 3, 4),
+  labels = c(0, 1, 2, 3, 4),
+  cex.axis = ca
+)
 plot(
   k_bh,
   k_hs,
@@ -972,35 +1035,45 @@ lines(K,
       lty = 2,
       lwd = lw * 1.5,
       col = 'red')
-mtext(side = 1,
-      "Beverton-Holt, k",
-      outer = FALSE,
-      padj = 3,
-      cex = cl)
-mtext(side = 2,
-      "Hockey-Stick, k",
-      outer = FALSE,
-      padj = -3,
-      cex = cl)
+mtext(
+  side = 1,
+  "Beverton-Holt, k",
+  outer = FALSE,
+  padj = 3,
+  cex = cl
+)
+mtext(
+  side = 2,
+  "Hockey-Stick, k",
+  outer = FALSE,
+  padj = -3,
+  cex = cl
+)
 text(2, 1.12, 'b) Carrying capacity, k')
 
-axis(side = 2,
-     at = c(0, 0.25, 0.5, 0.75, 1),
-     labels = c(0, 0.25, 0.5, 0.75, 1),
-     cex.axis = ca)
-axis(side = 1,
-     at = c(0, 1, 2, 3, 4, 5),
-     labels = c(0, 1, 2, 3, 4, 5),
-     cex.axis = ca)
+axis(
+  side = 2,
+  at = c(0, 0.25, 0.5, 0.75, 1),
+  labels = c(0, 0.25, 0.5, 0.75, 1),
+  cex.axis = ca
+)
+axis(
+  side = 1,
+  at = c(0, 1, 2, 3, 4, 5),
+  labels = c(0, 1, 2, 3, 4, 5),
+  cex.axis = ca
+)
 dev.off()
 #### Fig 6 - Optimal escapement histograms ####
 
 pdf(file = './plots/hist_combined.pdf',
     width = 7,
     height = 3.5)
-par(mfrow = c(4, 2),
-    mar = c(0, 0, 0.7, 2),
-    oma = c(3.5, 3.7, 0, 2))
+par(
+  mfrow = c(4, 2),
+  mar = c(0, 0, 0.7, 2),
+  oma = c(3.5, 3.7, 0, 2)
+)
 hist(
   opt_esc_bh,
   yaxs = "i",
@@ -1033,11 +1106,13 @@ hist(
   add = TRUE
 )
 text(0.25, 100, 'a) Proportion of fitted k', cex = 1.2)
-axis(side = 2,
-     at = c(0, 75),
-     labels = c(0, 75),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 2,
+  at = c(0, 75),
+  labels = c(0, 75),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
@@ -1074,11 +1149,13 @@ hist(
   cex.axis = 2,
   add = TRUE
 )
-axis(side = 4,
-     at = c(0, 50),
-     labels = c(0, 50),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 4,
+  at = c(0, 50),
+  labels = c(0, 50),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
@@ -1116,11 +1193,13 @@ hist(
   cex.axis = 2,
   add = TRUE
 )
-axis(side = 2,
-     at = c(0, 150),
-     labels = c(0, 150),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 2,
+  at = c(0, 150),
+  labels = c(0, 150),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
@@ -1156,11 +1235,13 @@ hist(
   cex.axis = 2,
   add = TRUE
 )
-axis(side = 4,
-     at = c(0, 50),
-     labels = c(0, 50),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 4,
+  at = c(0, 50),
+  labels = c(0, 50),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
@@ -1194,11 +1275,13 @@ hist(
   cex.axis = 2,
   add = TRUE
 )
-axis(side = 2,
-     at = c(0, 25),
-     labels = c(0, 25),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 2,
+  at = c(0, 25),
+  labels = c(0, 25),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
@@ -1232,11 +1315,13 @@ hist(
   cex.axis = 2,
   add = TRUE
 )
-axis(side = 4,
-     at = c(0, 50),
-     labels = c(0, 50),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 4,
+  at = c(0, 50),
+  labels = c(0, 50),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
@@ -1270,11 +1355,13 @@ hist(
   cex.axis = 2,
   add = TRUE
 )
-axis(side = 2,
-     at = c(0, 300),
-     labels = c(0, 300),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 2,
+  at = c(0, 300),
+  labels = c(0, 300),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
@@ -1308,53 +1395,66 @@ hist(
   cex.axis = 2,
   add = TRUE
 )
-axis(side = 4,
-     at = c(0, 50),
-     labels = c(0, 50),
-     cex.axis = 1.25,
-     mgp = c(2, 0.5, 0))
+axis(
+  side = 4,
+  at = c(0, 50),
+  labels = c(0, 50),
+  cex.axis = 1.25,
+  mgp = c(2, 0.5, 0)
+)
 axis(1,
      pos = 0,
      cex.axis = 1.25,
      mgp = c(2, 0.5, 0))
-mtext(side = 1,
-      "Optimal escapement",
-      outer = TRUE,
-      padj = 1.9,
-      cex = cl)
-mtext(side = 2,
-      "Frequency",
-      outer = TRUE,
-      padj = -1.9,
-      cex = cl)
-mtext(side = 1,
-      "Pella-Tomlinson",
-      outer = TRUE,
-      padj = -3, 
-      adj = -1.3,
-      at = 0.5,
-      col = pt_col)
-mtext(side = 1,
-      "Hockey-Stick",
-      outer = TRUE,
-      padj = -8.5, 
-      adj = -1.6,
-      at = 0.5,
-      col = hs_col)
-mtext(side = 1,
-      "Ricker",
-      outer = TRUE,
-      padj = -15, 
-      adj = -4,
-      at = 0.5,
-      col = ri_col)
-mtext(side = 1,
-      "Beverton-Holt",
-      outer = TRUE,
-      padj = -21, 
-      adj = -1.5,
-      at = 0.5,
-      col = bh_col)
+mtext(
+  side = 1,
+  "Optimal escapement",
+  outer = TRUE,
+  padj = 1.9,
+  cex = cl
+)
+mtext(
+  side = 2,
+  "Frequency",
+  outer = TRUE,
+  padj = -1.9,
+  cex = cl
+)
+mtext(
+  side = 1,
+  "Pella-Tomlinson",
+  outer = TRUE,
+  padj = -3,
+  adj = -1.3,
+  at = 0.5,
+  col = pt_col
+)
+mtext(
+  side = 1,
+  "Hockey-Stick",
+  outer = TRUE,
+  padj = -8.5,
+  adj = -1.6,
+  at = 0.5,
+  col = hs_col
+)
+mtext(
+  side = 1,
+  "Ricker",
+  outer = TRUE,
+  padj = -15,
+  adj = -4,
+  at = 0.5,
+  col = ri_col
+)
+mtext(
+  side = 1,
+  "Beverton-Holt",
+  outer = TRUE,
+  padj = -21,
+  adj = -1.5,
+  at = 0.5,
+  col = bh_col
+)
 
 dev.off()
-
