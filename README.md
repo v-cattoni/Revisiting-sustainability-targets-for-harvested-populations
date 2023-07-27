@@ -2,8 +2,12 @@
 Data files related to a project on sustainable harvest targets. 
 
 main.R:
-* contains entire analysis and code to generate figures
-* requires the data_files folder 
+* contains analysis and code to generate figures for the non-deterministic data
+* requires the data_files folder
+
+sensitivity_analysis.R:
+* contains sensitivity analysis run on all 3 data sets(all data, filtered data, non-deterministic data)
+* requires the data_files folder
 
 data_files:
 * contains RAM database and list of non-deterministic data which was visually identified
