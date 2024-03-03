@@ -1,0 +1,15 @@
+#!/bin/bash -l
+
+#PBS -N data_sim
+#PBS -l walltime=2:00:00
+#PBS -l mem=3gb
+#PBS -j oe
+
+#PBS -J 1-20
+
+module add r/3.6.2-foss-2019b
+
+cd $PBS_O_WORKDIR
+
+Rscript data_sim_Matt.R ${PBS_ARRAY_INDEX}
+Rscript data_sim_David.R ${PBS_ARRAY_INDEX}
