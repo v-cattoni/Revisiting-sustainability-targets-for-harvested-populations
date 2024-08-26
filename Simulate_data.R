@@ -3,8 +3,6 @@
 args<-commandArgs(TRUE)
 my_repeat <- eval( parse(text=args[1]) )
 
-setwd("/home/southl/BayesFish_NoLoglike")
-
 #### READING IN FILES ####
 load("./data_files/RAMCore[asmt][v4.495].rdata") #ram database
 cols <- read.csv("./data_files/non_det_cols.csv", header <- FALSE)[, 1] #non-deterministic data sets
