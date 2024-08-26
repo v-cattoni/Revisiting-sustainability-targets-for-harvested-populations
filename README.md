@@ -6,3 +6,5 @@ _main_: fits the models to the data using a Bayesian approach
 
 _Simulate_data_: simulates data from each model
 
+_main_sim_: fits the models to the simulated data using a Bayesian approach
+
